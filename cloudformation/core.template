@@ -1,0 +1,210 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'core' deployment",
+
+
+  "Parameters": {
+    "Domain": {
+      "Type": "String",
+      "Description": "Stacker Domain Name",
+      "AllowedPattern": "[a-z]+\\.[a-z]+",
+      "Default": "source.guru"
+    },
+
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "sg"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "General" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "Domain"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "dhcp": {
+      "Type": "AWS::EC2::DHCPOptions",
+      "Properties": {
+        "DomainName": { "Ref": "Domain" }
+      }
+    },
+
+    "dhcpa": {
+      "Type": "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties": {
+        "DhcpOptionsId": { "Ref": "dhcp" },
+        "VpcId": { "Ref": "vpc" }
+      }
+    },
+
+    "http": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "HTTP security group",
+        "SecurityGroupIngress": [
+          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "CidrIp": "0.0.0.0/0" },
+          { "IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "CidrIp": "0.0.0.0/0" }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-sg-http" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      }
+    },
+
+    "igw": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-igw" } }
+        ]
+      }
+    },
+
+    "igwa": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "InternetGatewayId": { "Ref": "igw" },
+        "VpcId": { "Ref": "vpc" }
+      }
+    },
+
+    "route": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": { "Ref": "igw" },
+        "RouteTableId": { "Ref": "rtb" }
+      }
+    },
+
+    "rtb": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-rtb-public" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      }
+    },
+
+    "ssh": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "SSH security group",
+        "SecurityGroupIngress": [
+          { "IpProtocol": "tcp", "FromPort": "22", "ToPort": "22", "CidrIp": "0.0.0.0/0" }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-sg-ssh" } }
+        ],
+        "VpcId": { "Ref": "vpc" }
+      }
+    },
+
+    "vpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.10.0.0/16",
+        "EnableDnsHostnames": true,
+        "EnableDnsSupport": true,
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-vpc" } }
+        ]
+      }
+    },
+
+    "zone": {
+      "Type": "AWS::Route53::HostedZone",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [
+            "",
+            [ { "Ref": "Domain" }, "." ]
+          ]
+        },
+        "VPCs": [
+          {
+            "VPCId": { "Ref": "vpc" },
+            "VPCRegion": { "Ref": "AWS::Region" }
+          }
+        ]
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "Domain": {
+      "Value": { "Ref": "Domain" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-domain" }
+      }
+    },
+
+    "HostedZoneId": {
+      "Value": { "Ref": "zone" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-hosted-zone-private" }
+      }
+    },
+
+    "RoutingTablePublic": {
+      "Value": { "Ref": "rtb" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-rtb-public" }
+      }
+    },
+
+    "SecurityGroupIdDefault": {
+      "Value": {
+        "Fn::GetAtt": [ "vpc", "DefaultSecurityGroup" ]
+      },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-sg-default" }
+      }
+    },
+
+    "SecurityGroupIdHttp": {
+      "Value": { "Ref": "http" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-sg-http" }
+      }
+    },
+
+    "SecurityGroupIdSsh": {
+      "Value": { "Ref": "ssh" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-sg-ssh" }
+      }
+    },
+
+    "VpcId": {
+      "Value": { "Ref": "vpc" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-vpc" }
+      }
+    }
+  }
+}
+

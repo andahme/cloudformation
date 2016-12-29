@@ -1,0 +1,94 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'subnet-nat' deployment",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Default": "am",
+      "Description": "Resource Group Name",
+      "AllowedPattern": "[a-z]{2,4}"
+    },
+
+    "PublicSubnetId": {
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+
+    "PrivateSubnetId": {
+      "Type": "AWS::EC2::Subnet::Id"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "General" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "PublicSubnetId",
+            "PrivateSubnetId"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "eip": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+
+    "nat": {
+      "Type": "AWS::EC2::NatGateway",
+      "Properties": {
+        "AllocationId": {
+          "Fn::GetAtt": [ "eip", "AllocationId" ]
+        },
+        "SubnetId": { "Ref": "PublicSubnetId" }
+      }
+    },
+
+    "route": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "NatGatewayId": { "Ref": "nat" },
+        "RouteTableId": { "Ref": "rtb" }
+      }
+    },
+
+    "rtb": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${AWS::StackName}-rtb" } }
+        ],
+        "VpcId": {
+          "Fn::ImportValue": { "Fn::Sub" : "${Group}-vpc" }
+        }
+      }
+    },
+
+    "rtba": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": { "Ref": "rtb" },
+        "SubnetId": { "Ref": "PrivateSubnetId" }
+      }
+    }
+  }
+}
+

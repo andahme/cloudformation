@@ -1,0 +1,100 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'subnet' deployment",
+
+
+  "Parameters": {
+    "AvailabilityZone": {
+      "Type": "AWS::EC2::AvailabilityZone::Name",
+      "Default": "us-east-1b"
+    },
+
+    "CidrBlock": {
+      "Type": "String",
+      "Default": "10.10.10.0/24"
+    },
+
+    "Group": {
+      "Type": "String",
+      "Description": "Resource Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "am"
+    },
+
+    "PublicSubnet": {
+      "Type": "String",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "Default": "true"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "General" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "AvailabilityZone",
+            "CidrBlock",
+            "PublicSubnet"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Conditions": {
+    "PublicSubnetCondition": {
+      "Fn::Equals": [ { "Ref": "PublicSubnet" }, "true" ]
+    }
+  },
+
+
+  "Resources": {
+    "rtba": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Condition": "PublicSubnetCondition",
+      "Properties": {
+        "RouteTableId": {
+          "Fn::ImportValue": { "Fn::Sub" : "${Group}-rtb-public" }
+        },
+        "SubnetId": { "Ref": "subnet" }
+      }
+    },
+
+    "subnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "AvailabilityZone": { "Ref": "AvailabilityZone" },
+        "CidrBlock": { "Ref": "CidrBlock" },
+        "MapPublicIpOnLaunch": { "Ref": "PublicSubnet" },
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${AWS::StackName}" } }
+        ],
+        "VpcId": {
+          "Fn::ImportValue": { "Fn::Sub" : "${Group}-vpc" }
+        }
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "SubnetId": {
+      "Value": { "Ref": "subnet" }
+    }
+  }
+}
+
