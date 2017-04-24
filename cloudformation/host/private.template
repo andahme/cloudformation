@@ -1,0 +1,143 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'host' deployment (Private)",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}"
+    },
+
+    "Host": {
+      "Type": "String",
+      "Description": "Resource Name and Host portion of the FQDN",
+      "AllowedPattern": "[a-z]+"
+    },
+
+    "InstanceType": {
+      "Type": "String",
+      "AllowedValues": [
+        "t2.nano",
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "m3.medium",
+        "m3.large",
+        "m4.large",
+        "c4.large"
+      ],
+      "Default": "t2.nano"
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+
+    "PrivateSubnetId": {
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+
+    "PrivateSecurityGroupIds": {
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    },
+
+    "UserName": {
+      "Type": "String",
+      "AllowedPattern": "[a-z]+"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+        {
+          "Label": { "default": "Instance" },
+          "Parameters": [
+            "Host",
+            "InstanceType",
+            "UserName",
+            "KeyName"
+          ]
+        },
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "PrivateSubnetId",
+            "PrivateSecurityGroupIds"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "dnspr": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-zone-private" } },
+        "Name": {
+          "Fn::Join": [ ".", [
+            { "Ref": "Host" }, { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain-private" } }
+          ] ]
+        },
+        "Type": "A",
+        "TTL": "900",
+        "ResourceRecords": [
+          { "Fn::GetAtt": [ "instance", "PrivateIp" ] }
+        ]
+      }
+    },
+
+    "instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-49e5cb5e",
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyName" },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": false,
+            "DeviceIndex": 0,
+            "GroupSet": { "Ref": "PrivateSecurityGroupIds" },
+            "SubnetId": { "Ref": "PrivateSubnetId" }
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${Host}" } }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [ "\n", [
+              "#cloud-config",
+              "package_update: true",
+              "package_upgrade: true",
+              "system_info:",
+              "  default_user:",
+ { "Fn::Sub": "    name: ${UserName}" }
+            ] ]
+          }
+        }
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "PrivateIp": {
+      "Value": {
+        "Fn::GetAtt": [ "instance", "PrivateIp" ]
+      }
+    }
+  }
+}
+
