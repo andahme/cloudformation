@@ -16,9 +16,9 @@
 
     "Group": {
       "Type": "String",
-      "Description": "Resource Group Name",
+      "Description": "Stacker Group Name",
       "AllowedPattern": "[a-z]{2,4}",
-      "Default": "am"
+      "Default": "sg"
     },
 
     "PublicSubnet": {
@@ -36,18 +36,17 @@
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
         {
-          "Label": { "default": "General" },
+          "Label": { "default": "Stacker" },
           "Parameters": [
             "Group"
           ]
         },
-
         {
           "Label": { "default": "Network" },
           "Parameters": [
+            "PublicSubnet",
             "AvailabilityZone",
-            "CidrBlock",
-            "PublicSubnet"
+            "CidrBlock"
           ]
         }
       ]
@@ -81,19 +80,12 @@
         "CidrBlock": { "Ref": "CidrBlock" },
         "MapPublicIpOnLaunch": { "Ref": "PublicSubnet" },
         "Tags": [
-          { "Key": "Name", "Value": { "Fn::Sub": "${AWS::StackName}" } }
+          { "Key": "Name", "Value": { "Ref": "AWS::StackName" } }
         ],
         "VpcId": {
           "Fn::ImportValue": { "Fn::Sub" : "${Group}-vpc" }
         }
       }
-    }
-  },
-
-
-  "Outputs": {
-    "SubnetId": {
-      "Value": { "Ref": "subnet" }
     }
   }
 }

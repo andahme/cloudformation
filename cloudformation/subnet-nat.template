@@ -1,14 +1,14 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "A Stacker 'subnet-nat' deployment",
+  "Description": "Stacker Subnet 'nat' deployment",
 
 
   "Parameters": {
     "Group": {
       "Type": "String",
-      "Default": "am",
-      "Description": "Resource Group Name",
-      "AllowedPattern": "[a-z]{2,4}"
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "sg"
     },
 
     "PublicSubnetId": {
@@ -25,12 +25,11 @@
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
         {
-          "Label": { "default": "General" },
+          "Label": { "default": "Stacker" },
           "Parameters": [
             "Group"
           ]
         },
-
         {
           "Label": { "default": "Network" },
           "Parameters": [
@@ -77,7 +76,7 @@
           { "Key": "Name", "Value": { "Fn::Sub": "${AWS::StackName}-rtb" } }
         ],
         "VpcId": {
-          "Fn::ImportValue": { "Fn::Sub" : "${Group}-vpc" }
+          "Fn::ImportValue": { "Fn::Sub": "${Group}-vpc" }
         }
       }
     },

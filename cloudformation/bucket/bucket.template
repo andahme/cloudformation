@@ -1,0 +1,21 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'bucket' deployment",
+
+
+  "Parameters": {
+    "BucketName": {
+      "Type": "String"
+    }
+  },
+
+
+  "Resources": {
+    "bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": { "Ref": "BucketName" }
+      }
+    }
+  }
+}

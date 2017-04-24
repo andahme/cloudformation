@@ -1,0 +1,66 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "A Stacker 'zone' deployment",
+
+
+  "Parameters": {
+    "Domain": {
+      "Type": "String",
+      "AllowedPattern": "[a-z]+(\\.[a-z]+)+"
+    },
+
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "sg"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "Domain"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources" : {
+    "zone": {
+      "Type": "AWS::Route53::HostedZone",
+      "Properties": {
+        "Name": { "Fn::Sub": "${Domain}." }
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "Domain": {
+      "Value": { "Fn::Sub": "${Domain}" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-domain" }
+      }
+    },
+
+    "HostedZoneId": {
+      "Value": { "Ref": "zone" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-zone" }
+      }
+    }
+  }
+}

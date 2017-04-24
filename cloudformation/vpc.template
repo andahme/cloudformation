@@ -1,21 +1,21 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "A Stacker 'core' deployment",
+  "Description": "A Stacker 'vpc' deployment",
 
 
   "Parameters": {
-    "Domain": {
-      "Type": "String",
-      "Description": "Stacker Domain Name",
-      "AllowedPattern": "[a-z]+\\.[a-z]+",
-      "Default": "source.guru"
-    },
-
     "Group": {
       "Type": "String",
       "Description": "Stacker Group Name",
       "AllowedPattern": "[a-z]{2,4}",
       "Default": "sg"
+    },
+
+    "Domain": {
+      "Type": "String",
+      "Description": "Private Hosted Zone (VPC)",
+      "AllowedPattern": "[a-z]+(\\.[a-z]+)+",
+      "Default": "aws.source.guru"
     }
   },
 
@@ -24,12 +24,11 @@
     "AWS::CloudFormation::Interface": {
       "ParameterGroups": [
         {
-          "Label": { "default": "General" },
+          "Label": { "default": "Stacker" },
           "Parameters": [
             "Group"
           ]
         },
-
         {
           "Label": { "default": "Network" },
           "Parameters": [
@@ -45,7 +44,13 @@
     "dhcp": {
       "Type": "AWS::EC2::DHCPOptions",
       "Properties": {
-        "DomainName": { "Ref": "Domain" }
+        "DomainName": { "Ref": "Domain" },
+        "DomainNameServers": [
+          "AmazonProvidedDNS"
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-dhcp-opts" } }
+        ]
       }
     },
 
@@ -137,12 +142,7 @@
     "zone": {
       "Type": "AWS::Route53::HostedZone",
       "Properties": {
-        "Name": {
-          "Fn::Join": [
-            "",
-            [ { "Ref": "Domain" }, "." ]
-          ]
-        },
+        "Name": { "Fn::Sub": "${Domain}." },
         "VPCs": [
           {
             "VPCId": { "Ref": "vpc" },
@@ -156,20 +156,20 @@
 
   "Outputs": {
     "Domain": {
-      "Value": { "Ref": "Domain" },
+      "Value": { "Fn::Sub": "${Domain}" },
       "Export": {
-        "Name": { "Fn::Sub": "${Group}-domain" }
+        "Name": { "Fn::Sub": "${Group}-domain-private" }
       }
     },
 
     "HostedZoneId": {
       "Value": { "Ref": "zone" },
       "Export": {
-        "Name": { "Fn::Sub": "${Group}-hosted-zone-private" }
+        "Name": { "Fn::Sub": "${Group}-zone-private" }
       }
     },
 
-    "RoutingTablePublic": {
+    "RouteTableIdPublic": {
       "Value": { "Ref": "rtb" },
       "Export": {
         "Name": { "Fn::Sub": "${Group}-rtb-public" }

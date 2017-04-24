@@ -1,0 +1,52 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'mx' deployment (Gmail)",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "sg"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "mx": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-zone" } },
+        "Name": {
+          "Fn::Join": [
+            "", [ { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } }, "." ]
+          ]
+        },
+        "Type": "MX",
+        "TTL": "3600",
+        "ResourceRecords": [
+          "1 ASPMX.L.GOOGLE.COM",
+          "5 ALT1.ASPMX.L.GOOGLE.COM",
+          "5 ALT2.ASPMX.L.GOOGLE.COM",
+          "10 ALT3.ASPMX.L.GOOGLE.COM",
+          "10 ALT4.ASPMX.L.GOOGLE.COM"
+        ]
+      }
+    }
+  }
+}
