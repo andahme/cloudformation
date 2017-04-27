@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "A Stacker 'zone' deployment",
+  "Description" : "A Stacker 'domain' deployment",
 
 
   "Parameters": {
