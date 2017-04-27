@@ -20,6 +20,26 @@
   },
 
 
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "Host"
+          ]
+        }
+      ]
+    }
+  },
+
+
   "Resources": {
     "bucket": {
       "Type": "AWS::S3::Bucket",
