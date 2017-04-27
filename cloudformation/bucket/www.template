@@ -96,7 +96,7 @@
         "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub" : "${Group}-zone" } },
         "Name": {
           "Fn::Join": [
-            ".", [ { "Ref": "Host" }, { "Fn::ImportValue": { "Fn::Sub" : "${Group}-domain" } }, "." ]
+            "", [ { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub" : "${Group}-domain" } }, "." ]
           ]
         },
         "AliasTarget": {
