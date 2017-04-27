@@ -3,7 +3,6 @@ const aws = require('aws-sdk');
 const fs = require('fs');
 
 
-const cf = new aws.CloudFormation({ "region": "us-east-1" });
 const s3 = new aws.S3({ "region": "us-east-1" });
 
 
@@ -12,9 +11,21 @@ const main = (domain) => {
 
   const bucketPromise = createBucket(bucket);
 
+  //TODO: Make this recursive..
   const cloudFormationSourcePromise = listDirectory('cloudformation');
+  const cloudFormationBucketSourcePromise = listDirectory('cloudformation/bucket');
+  const cloudFormationMxSourcePromise = listDirectory('cloudformation/mx');
+
   const cloudFormationUploadPromise = Promise.all([ bucketPromise, cloudFormationSourcePromise ]).then((values) => {
     return uploadFiles(values[0], values[1]);
+  });
+
+  const cloudFormationBucketUploadPromise = Promise.all([ bucketPromise, cloudFormationBucketSourcePromise ]).then((values) => {
+      return uploadFiles(values[0], values[1]);
+  });
+
+  const cloudFormationMxUploadPromise = Promise.all([ bucketPromise, cloudFormationMxSourcePromise ]).then((values) => {
+      return uploadFiles(values[0], values[1]);
   });
 };
 
@@ -45,13 +56,17 @@ const createBucket = (bucketName) => {
 };
 
 const listDirectory = (directory) => {
+  const filterTemplates = (file) => {
+    return file.endsWith(".template");
+  };
+
   const addDirectoryPrefix = (file) => {
     return directory + '/' + file;
   };
 
   return new Promise((resolve, reject) => {
     fs.readdir(directory, (err, data) => {
-      if (err) reject(err); else resolve(data.map(addDirectoryPrefix));
+        if (err) reject(err); else resolve(data.filter(filterTemplates).map(addDirectoryPrefix));
     });
   });
 };
