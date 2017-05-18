@@ -1,0 +1,154 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "A Stacker 'host' deployment (Docker)",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}"
+    },
+
+    "Host": {
+      "Type": "String",
+      "Description": "Resource Name and Host portion of the FQDN",
+      "AllowedPattern": "[a-z]+"
+    },
+
+    "InstanceType": {
+      "Type": "String",
+      "AllowedValues": [
+        "t2.nano",
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "m3.medium",
+        "m3.large",
+        "m4.large",
+        "c4.large"
+      ],
+      "Default": "t2.nano"
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+
+    "SecurityGroupIds": {
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+    },
+
+    "SubnetId": {
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+
+    "UserName": {
+      "Type": "String",
+      "AllowedPattern": "[a-z]+"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group"
+          ]
+        },
+        {
+          "Label": { "default": "Instance" },
+          "Parameters": [
+            "Host",
+            "InstanceType",
+            "UserName",
+            "KeyName"
+          ]
+        },
+        {
+          "Label": { "default": "Network" },
+          "Parameters": [
+            "SubnetId",
+            "SecurityGroupIds"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "IamInstanceProfile": "dockers",
+        "ImageId": "ami-49e5cb5e",
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyName" },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": 0,
+            "GroupSet": { "Ref": "SecurityGroupIds" },
+            "SubnetId": { "Ref": "SubnetId" }
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${Host}" } }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [ "\n", [
+              "#cloud-config",
+              "apt_sources:",
+              " -",
+              "   filename: docker.list",
+              "   keyid: F76221572C52609D",
+              "   keyserver: hkp://ha.pool.sks-keyservers.net",
+              "   source: deb https://apt.dockerproject.org/repo debian-jessie testing",
+              "package_update: true",
+              "packages:",
+              " - awscli",
+              " - docker-engine",
+              "system_info:",
+              "  default_user:",
+ { "Fn::Sub": "    name: ${UserName}" },
+              "runcmd:",
+ { "Fn::Sub": " - [ usermod, -G, docker, -a, ${UserName} ]" }
+            ] ]
+          }
+        }
+      }
+    },
+
+    "dns": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-zone" } },
+        "Name": {
+          "Fn::Join": [ ".", [
+            { "Ref": "Host" }, { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } }
+          ] ]
+        },
+        "Type": "A",
+        "TTL": "900",
+        "ResourceRecords": [
+          { "Fn::GetAtt": [ "instance", "PublicIp" ] }
+        ]
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "PrivateIp": {
+      "Value": {
+        "Fn::GetAtt": [ "instance", "PrivateIp" ]
+      }
+    }
+  }
+}
+
