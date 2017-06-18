@@ -84,7 +84,6 @@
     "instance": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
-        "IamInstanceProfile": "dockers",
         "ImageId": "ami-49e5cb5e",
         "InstanceType": { "Ref": "InstanceType" },
         "KeyName": { "Ref": "KeyName" },
