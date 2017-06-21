@@ -36,10 +36,10 @@ git tag v${RELEASE_VERSION}
 find cloudformation -name "*.template" -exec sed -i '' s/SNAPSHOT/v${RELEASE_VERSION}/g {} \;
 
 # PACKAGE
-tar -zxf aws-stacker-${FULL_VERSION}.tar.gz cloudformation
+tar -czf aws-stacker-${FULL_VERSION}.tar.gz cloudformation
 
 # CLEANUP
-git checkout -- .
+git checkout -- cloudformation/.
 
 
 
@@ -51,9 +51,5 @@ git checkout -- .
 echo ${POST_RELEASE_VERSION} > version.txt
 git add version.txt
 git commit -m "Post release version.txt update."
-
-# PUSH
-git push --tags
-
 
 
