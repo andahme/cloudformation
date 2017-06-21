@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "A Stacker 'vpc' deployment",
+  "Description": "AWS Stacker (SNAPSHOT) 'vpc' deployment",
 
 
   "Parameters": {
@@ -15,7 +15,7 @@
       "Type": "String",
       "Description": "Private Hosted Zone (VPC)",
       "AllowedPattern": "[a-z]+(\\.[a-z]+)+",
-      "Default": "aws.source.guru"
+      "Default": "aws.andah.me"
     }
   },
 

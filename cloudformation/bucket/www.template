@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "A Stacker 'bucket' deployment (Static Website)",
+  "Description": "AWS Stacker (SNAPSHOT) www 'bucket' deployment",
 
 
   "Parameters": {
@@ -47,7 +47,7 @@
         "AccessControl": "PublicRead",
         "BucketName": {
           "Fn::Join": [
-            ".", [ { "Ref": "Host" }, { "Fn::ImportValue": { "Fn::Sub" : "${Group}-domain" } } ]
+            ".", [ { "Ref": "Host" }, { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } } ]
           ]
         },
         "CorsConfiguration": {
@@ -56,7 +56,7 @@
             "AllowedMethods": [ "GET" ],
             "AllowedOrigins": [ {
               "Fn::Join": [
-                "", [ { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub" : "${Group}-domain" } } ]
+                "", [ { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } } ]
               ]
             } ],
             "MaxAge": 3000
@@ -93,10 +93,10 @@
     "record": {
       "Type": "AWS::Route53::RecordSet",
       "Properties": {
-        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub" : "${Group}-zone" } },
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-zone" } },
         "Name": {
           "Fn::Join": [
-            "", [ { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub" : "${Group}-domain" } }, "." ]
+            "", [ { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } }, "." ]
           ]
         },
         "AliasTarget": {
@@ -113,7 +113,7 @@
     "Website": {
       "Value": {
         "Fn::Join": [
-          "", [ "http://", { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub" : "${Group}-domain" } } ]
+          "", [ "http://", { "Ref": "Host" }, ".", { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } } ]
         ]
       }
     }
