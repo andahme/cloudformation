@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "A Stacker 'bucket' deployment",
+  "Description": "AWS Stacker (SNAPSHOT) 'bucket' deployment",
 
 
   "Parameters": {

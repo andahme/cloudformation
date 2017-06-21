@@ -1,6 +1,6 @@
 {
-  "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "A Stacker 'domain' deployment",
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Stacker (SNAPSHOT) 'domain' deployment",
 
 
   "Parameters": {
@@ -38,7 +38,7 @@
   },
 
 
-  "Resources" : {
+  "Resources": {
     "zone": {
       "Type": "AWS::Route53::HostedZone",
       "Properties": {

@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "A Stacker 'subnet' deployment",
+  "Description": "AWS Stacker (SNAPSHOT) 'subnet' deployment",
 
 
   "Parameters": {
@@ -67,7 +67,7 @@
       "Condition": "PublicSubnetCondition",
       "Properties": {
         "RouteTableId": {
-          "Fn::ImportValue": { "Fn::Sub" : "${Group}-rtb-public" }
+          "Fn::ImportValue": { "Fn::Sub": "${Group}-rtb-public" }
         },
         "SubnetId": { "Ref": "subnet" }
       }
@@ -83,7 +83,7 @@
           { "Key": "Name", "Value": { "Ref": "AWS::StackName" } }
         ],
         "VpcId": {
-          "Fn::ImportValue": { "Fn::Sub" : "${Group}-vpc" }
+          "Fn::ImportValue": { "Fn::Sub": "${Group}-vpc" }
         }
       }
     }
