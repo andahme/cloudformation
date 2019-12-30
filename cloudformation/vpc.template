@@ -4,18 +4,25 @@
 
 
   "Parameters": {
+    "Domain": {
+      "Type": "String",
+      "Description": "Private Hosted Zone (VPC)",
+      "AllowedPattern": "[a-z0-9]+(\\.[a-z0-9]+)+",
+      "Default": "aws.andah.me"
+    },
+
     "Group": {
       "Type": "String",
       "Description": "Stacker Group Name",
       "AllowedPattern": "[a-z]{2,4}",
-      "Default": "sg"
+      "Default": "am"
     },
 
-    "Domain": {
+    "NetworkPrefix": {
       "Type": "String",
-      "Description": "Private Hosted Zone (VPC)",
-      "AllowedPattern": "[a-z]+(\\.[a-z]+)+",
-      "Default": "aws.andah.me"
+      "Description": "The first two octets for the network number (X.X.0.0/16)",
+      "AllowedPattern": "[0-9]+\\.[0-9]+",
+      "Default": "10.10"
     }
   },
 
@@ -32,7 +39,8 @@
         {
           "Label": { "default": "Network" },
           "Parameters": [
-            "Domain"
+            "Domain",
+            "NetworkPrefix"
           ]
         }
       ]
@@ -49,7 +57,7 @@
           "AmazonProvidedDNS"
         ],
         "Tags": [
-          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-dhcp-opts" } }
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-vpc-dhcp-opts" } }
         ]
       }
     },
@@ -71,7 +79,7 @@
           { "IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "CidrIp": "0.0.0.0/0" }
         ],
         "Tags": [
-          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-sg-http" } }
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-vpc-sg-http" } }
         ],
         "VpcId": { "Ref": "vpc" }
       }
@@ -81,7 +89,7 @@
       "Type": "AWS::EC2::InternetGateway",
       "Properties": {
         "Tags": [
-          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-igw" } }
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-vpc-igw" } }
         ]
       }
     },
@@ -94,25 +102,6 @@
       }
     },
 
-    "route": {
-      "Type": "AWS::EC2::Route",
-      "Properties": {
-        "DestinationCidrBlock": "0.0.0.0/0",
-        "GatewayId": { "Ref": "igw" },
-        "RouteTableId": { "Ref": "rtb" }
-      }
-    },
-
-    "rtb": {
-      "Type": "AWS::EC2::RouteTable",
-      "Properties": {
-        "Tags": [
-          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-rtb-public" } }
-        ],
-        "VpcId": { "Ref": "vpc" }
-      }
-    },
-
     "ssh": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -121,7 +110,7 @@
           { "IpProtocol": "tcp", "FromPort": "22", "ToPort": "22", "CidrIp": "0.0.0.0/0" }
         ],
         "Tags": [
-          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-sg-ssh" } }
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-vpc-sg-ssh" } }
         ],
         "VpcId": { "Ref": "vpc" }
       }
@@ -130,7 +119,7 @@
     "vpc": {
       "Type": "AWS::EC2::VPC",
       "Properties": {
-        "CidrBlock": "10.10.0.0/16",
+        "CidrBlock": { "Fn::Sub": "${NetworkPrefix}.0.0/16" },
         "EnableDnsHostnames": true,
         "EnableDnsSupport": true,
         "Tags": [
@@ -155,47 +144,17 @@
 
 
   "Outputs": {
-    "Domain": {
+    "VpcDomain": {
       "Value": { "Fn::Sub": "${Domain}" },
       "Export": {
-        "Name": { "Fn::Sub": "${Group}-domain-private" }
+        "Name": { "Fn::Sub": "${Group}-vpc-domain-private" }
       }
     },
 
-    "HostedZoneId": {
+    "VpcHostedZoneId": {
       "Value": { "Ref": "zone" },
       "Export": {
-        "Name": { "Fn::Sub": "${Group}-zone-private" }
-      }
-    },
-
-    "RouteTableIdPublic": {
-      "Value": { "Ref": "rtb" },
-      "Export": {
-        "Name": { "Fn::Sub": "${Group}-rtb-public" }
-      }
-    },
-
-    "SecurityGroupIdDefault": {
-      "Value": {
-        "Fn::GetAtt": [ "vpc", "DefaultSecurityGroup" ]
-      },
-      "Export": {
-        "Name": { "Fn::Sub": "${Group}-sg-default" }
-      }
-    },
-
-    "SecurityGroupIdHttp": {
-      "Value": { "Ref": "http" },
-      "Export": {
-        "Name": { "Fn::Sub": "${Group}-sg-http" }
-      }
-    },
-
-    "SecurityGroupIdSsh": {
-      "Value": { "Ref": "ssh" },
-      "Export": {
-        "Name": { "Fn::Sub": "${Group}-sg-ssh" }
+        "Name": { "Fn::Sub": "${Group}-vpc-zone-private" }
       }
     },
 
@@ -203,6 +162,43 @@
       "Value": { "Ref": "vpc" },
       "Export": {
         "Name": { "Fn::Sub": "${Group}-vpc" }
+      }
+    },
+
+    "VpcInternetGatewayId": {
+      "Value": { "Ref": "igw" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-vpc-igw" }
+      }
+    },
+
+    "VpcNetworkPrefix": {
+      "Value": { "Ref": "NetworkPrefix" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-vpc-network-prefix" }
+      }
+    },
+
+    "VpcSecurityGroupIdDefault": {
+      "Value": {
+        "Fn::GetAtt": [ "vpc", "DefaultSecurityGroup" ]
+      },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-vpc-sg-default" }
+      }
+    },
+
+    "VpcSecurityGroupIdHttp": {
+      "Value": { "Ref": "http" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-vpc-sg-http" }
+      }
+    },
+
+    "VpcSecurityGroupIdSsh": {
+      "Value": { "Ref": "ssh" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-vpc-sg-ssh" }
       }
     }
   }
