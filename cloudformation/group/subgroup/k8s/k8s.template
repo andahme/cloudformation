@@ -1,0 +1,117 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Stacker (SNAPSHOT) 'k8s' deployment",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "am"
+    },
+
+    "SubGroup": {
+      "Type": "String",
+      "Description": "Stacker SubGroup Name",
+      "AllowedPattern": "[a-z0-9]{2,4}",
+      "Default": "dev"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group",
+            "SubGroup"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "sgc": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": { "Fn::Sub": "Kubernetes Security Group (Control-Plane)" },
+        "SecurityGroupIngress": [
+          { "IpProtocol": "tcp", "FromPort": "6443", "ToPort": "6443", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-control" } }
+        ],
+        "VpcId": {
+          "Fn::ImportValue": { "Fn::Sub": "${Group}-vpc" }
+        }
+      }
+    },
+
+    "sgci": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Ref": "sgc" },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": { "Ref": "sgw" }
+      }
+    },
+
+    "sgw": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": { "Fn::Sub": "Kubernetes Security Group (Workers)" },
+        "SecurityGroupIngress": [
+          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } },
+          { "IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-workers" } }
+        ],
+        "VpcId": {
+          "Fn::ImportValue": { "Fn::Sub": "${Group}-vpc" }
+        }
+      }
+    },
+
+    "sgwic": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Ref": "sgw" },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": { "Ref": "sgc" }
+      }
+    },
+
+    "sgwiw": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Ref": "sgw" },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": { "Ref": "sgw" }
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "SecurityGroupIdControlPlane": {
+      "Value": { "Ref":  "sgc" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-control" }
+      }
+    },
+
+    "SecurityGroupIdWorkers": {
+      "Value": { "Ref":  "sgw" },
+      "Export": {
+        "Name": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-workers" }
+      }
+    }
+  }
+}
+

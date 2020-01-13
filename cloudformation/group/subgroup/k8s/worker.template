@@ -1,0 +1,184 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Stacker (SNAPSHOT) k8s worker 'host' deployment",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "am"
+    },
+
+    "InstanceType": {
+      "Type": "String",
+      "AllowedValues": [
+        "t3.nano",
+        "t3.micro",
+        "t3.small",
+        "t3.medium",
+        "m5.large",
+        "m5.xlarge",
+        "m5.2xlarge",
+        "i3.large",
+        "i3.xlarge",
+        "i3.2xlarge"
+      ],
+      "Default": "t3.small"
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+
+    "SubGroup": {
+      "Type": "String",
+      "Description": "Stacker SubGroup Name",
+      "AllowedPattern": "[a-z0-9]{2,4}",
+      "Default": "dev"
+    },
+
+    "UserName": {
+      "Type": "String",
+      "AllowedPattern": "[a-z0-9-]+"
+    },
+
+    "WorkerNumber": {
+      "Type": "String",
+      "Description": "Worker Number (101-199)",
+      "AllowedPattern": "(10[1-9]|1[1-9][0-9])",
+      "Default": "101"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group",
+            "SubGroup"
+          ]
+        },
+        {
+          "Label": { "default": "Kubernetes" },
+          "Parameters": [
+            "WorkerNumber"
+          ]
+        },
+        {
+          "Label": { "default": "Instance" },
+          "Parameters": [
+            "InstanceType",
+            "UserName",
+            "KeyName"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-0dedf6a6502877301",
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyName" },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": 0,
+            "GroupSet": [
+              { "Fn::ImportValue": { "Fn::Sub": "${Group}-sg" } },
+              { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } },
+              { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-workers" } }
+            ],
+            "PrivateIpAddress": {
+              "Fn::Join": [ ".", [
+                { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-network-prefix" } }, { "Fn::Sub":  "${WorkerNumber}"}
+              ] ]
+            },
+            "SubnetId": {
+              "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-subnet" }
+            }
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-worker-${WorkerNumber}" } },
+          { "Key": "Stacker:Group", "Value": { "Fn::Sub": "${Group}" } },
+          { "Key": "Stacker:SubGroup", "Value": { "Fn::Sub": "${SubGroup}" } },
+          { "Key": "Stacker:HostType", "Value": "Kubernetes" },
+          { "Key": "Stacker:Kubernetes:HostRole", "Value": "Worker" },
+          { "Key": "Stacker:Kubernetes:HostPodCidr", "Value": { "Fn::Sub": "10.200.${WorkerNumber}.0/24" } }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [ "\n", [
+              "#cloud-config",
+ { "Fn::Sub": "hostname: worker-${WorkerNumber}" },
+              {
+                "Fn::Join": [ ".", [
+ { "Fn::Sub": "fqdn: worker-${WorkerNumber}" }, { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain-private" } }
+                ] ]
+              },
+              "system_info:",
+              "  default_user:",
+ { "Fn::Sub": "    name: ${UserName}" }
+            ] ]
+          }
+        }
+      }
+    },
+
+    "dnsprivate": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-zone-private" } },
+        "Name": {
+          "Fn::Join": [ ".", [
+            { "Fn::Sub": "worker-${WorkerNumber}" }, { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain-private" } }
+          ] ]
+        },
+        "Type": "A",
+        "TTL": "900",
+        "ResourceRecords": [
+          { "Fn::GetAtt": [ "instance", "PrivateIp" ] }
+        ]
+      }
+    },
+
+    "route": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": { "Fn::Sub": "10.200.${WorkerNumber}.0/24" },
+        "InstanceId": { "Ref": "instance" },
+        "RouteTableId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-rtb" } }
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "PodCidr": {
+      "Value": { "Fn::Sub": "10.200.${WorkerNumber}.0/24" }
+    },
+
+    "PrivateIp": {
+      "Value": {
+        "Fn::GetAtt": [ "instance", "PrivateIp" ]
+      }
+    },
+
+    "PublicIp": {
+      "Value": {
+        "Fn::GetAtt": [ "instance", "PublicIp" ]
+      }
+    }
+  }
+}
+

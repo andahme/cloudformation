@@ -13,7 +13,7 @@
       "Type": "String",
       "Description": "Stacker Group Name",
       "AllowedPattern": "[a-z]{2,4}",
-      "Default": "sg"
+      "Default": "am"
     }
   },
 
@@ -64,3 +64,4 @@
     }
   }
 }
+
