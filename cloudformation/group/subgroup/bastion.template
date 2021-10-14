@@ -1,0 +1,173 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS Stacker (SNAPSHOT) bastion 'host' deployment",
+
+
+  "Parameters": {
+    "Group": {
+      "Type": "String",
+      "Description": "Stacker Group Name",
+      "AllowedPattern": "[a-z]{2,4}",
+      "Default": "am"
+    },
+
+    "InstanceType": {
+      "Type": "String",
+      "AllowedValues": [
+        "t3.nano",
+        "t3.micro"
+      ],
+      "Default": "t3.micro"
+    },
+
+    "KeyName": {
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+
+    "SubGroup": {
+      "Type": "String",
+      "Description": "Stacker SubGroup Name",
+      "AllowedPattern": "[a-z0-9]{2,4}",
+      "Default": "dev"
+    },
+
+    "UserName": {
+      "Type": "String",
+      "AllowedPattern": "[a-z0-9-]+"
+    }
+  },
+
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [
+        {
+          "Label": { "default": "Stacker" },
+          "Parameters": [
+            "Group",
+            "SubGroup"
+          ]
+        },
+        {
+          "Label": { "default": "Instance" },
+          "Parameters": [
+            "InstanceType",
+            "UserName",
+            "KeyName"
+          ]
+        }
+      ]
+    }
+  },
+
+
+  "Resources": {
+    "instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "ImageId": "ami-0dedf6a6502877301",
+        "InstanceType": { "Ref": "InstanceType" },
+        "KeyName": { "Ref": "KeyName" },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": true,
+            "DeviceIndex": 0,
+            "GroupSet": [
+              { "Fn::ImportValue": { "Fn::Sub": "${Group}-sg" } },
+              { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } },
+              { "Fn::ImportValue": { "Fn::Sub": "${Group}-sg-ssh" } }
+            ],
+            "PrivateIpAddress": {
+              "Fn::Join": [ ".", [
+                { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-network-prefix" } }, "4"
+              ] ]
+            },
+            "SubnetId": {
+              "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-subnet" }
+            }
+          }
+        ],
+        "Tags": [
+          { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-bastion" } },
+          { "Key": "Stacker:Group", "Value": { "Ref": "Group" } },
+          { "Key": "Stacker:SubGroup", "Value": { "Ref": "SubGroup" } },
+          { "Key": "Stacker:HostType", "Value": "Kubernetes" },
+          { "Key": "Stacker:Kubernetes:HostRole", "Value": "Bastion" }
+        ],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [ "\n", [
+              "#cloud-config",
+ { "Fn::Sub": "hostname: dev" },
+              {
+                "Fn::Join": [ "", [
+              "fqdn: ", { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain-private" } }
+                ] ]
+              },
+              "system_info:",
+              "  default_user:",
+ { "Fn::Sub": "    name: ${UserName}" }
+            ] ]
+          }
+        }
+      }
+    },
+
+    "dns": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-zone" } },
+        "Name": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain" } },
+        "Type": "A",
+        "TTL": "900",
+        "ResourceRecords": [
+          { "Fn::GetAtt": [ "instance", "PublicIp" ] }
+        ]
+      }
+    },
+
+    "dnsprivate": {
+      "Type": "AWS::Route53::RecordSet",
+      "Properties": {
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-zone-private" } },
+        "Name": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain-private" } },
+        "Type": "A",
+        "TTL": "900",
+        "ResourceRecords": [
+          { "Fn::GetAtt": [ "instance", "PrivateIp" ] }
+        ]
+      }
+    },
+
+    "ingress": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } },
+        "IpProtocol": "tcp",
+        "FromPort": "22",
+        "ToPort": "22",
+        "CidrIp": {
+          "Fn::Join": [ ".", [
+            { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-network-prefix" } }, "4/32"
+          ] ]
+        }
+      }
+    }
+  },
+
+
+  "Outputs": {
+    "PrivateIp": {
+      "Value": {
+        "Fn::GetAtt": [ "instance", "PrivateIp" ]
+      }
+    },
+
+    "PublicIp": {
+      "Value": {
+        "Fn::GetAtt": [ "instance", "PublicIp" ]
+      }
+    }
+  }
+}
+
