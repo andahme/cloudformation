@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "andahme/cloudformation (v0.0.3-SNAPSHOT) 'domain' deployment",
+  "Description": "andahme/cloudformation (v0.0.4-SNAPSHOT) 'domain' deployment",
 
 
   "Parameters": {
