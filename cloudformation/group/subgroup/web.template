@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS Stacker (SNAPSHOT) web 'bucket' deployment",
+  "Description": "andahme/cloudformation (v0.0.3-SNAPSHOT) web 'bucket' deployment",
 
 
   "Parameters": {

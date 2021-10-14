@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Stacker (SNAPSHOT): A 'domain' deployment",
+  "Description": "Stacker (v0.0.3-SNAPSHOT): A 'domain' deployment",
 
 
   "Parameters": {
