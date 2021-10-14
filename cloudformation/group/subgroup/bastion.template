@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "andahme/cloudformation (v0.0.3-SNAPSHOT) bastion 'host' deployment",
+  "Description": "andahme/cloudformation (v0.0.3) bastion 'host' deployment",
 
 
   "Parameters": {
