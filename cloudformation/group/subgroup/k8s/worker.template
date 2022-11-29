@@ -108,6 +108,7 @@
             }
           }
         ],
+        "SourceDestCheck": false,
         "Tags": [
           { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-worker-${WorkerNumber}" } },
           { "Key": "Stacker:Group", "Value": { "Fn::Sub": "${Group}" } },
