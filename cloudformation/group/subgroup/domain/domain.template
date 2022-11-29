@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Stacker (v0.0.4-SNAPSHOT): A 'domain' deployment",
+  "Description": "andahme/cloudformation (v0.0.4-SNAPSHOT) A 'domain' deployment",
 
 
   "Parameters": {
