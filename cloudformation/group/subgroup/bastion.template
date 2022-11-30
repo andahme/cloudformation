@@ -116,8 +116,12 @@
     "dns": {
       "Type": "AWS::Route53::RecordSet",
       "Properties": {
-        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-zone" } },
-        "Name": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain" } },
+        "HostedZoneId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-zone" } },
+        "Name": {
+          "Fn::Join": [ ".", [
+            { "Fn::Sub": "${SubGroup}" }, { "Fn::ImportValue": { "Fn::Sub": "${Group}-domain" } }
+          ] ]
+        },
         "Type": "A",
         "TTL": "900",
         "ResourceRecords": [
