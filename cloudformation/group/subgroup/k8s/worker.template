@@ -113,7 +113,7 @@
           { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-worker-${WorkerNumber}" } },
           { "Key": "Stacker:Group", "Value": { "Fn::Sub": "${Group}" } },
           { "Key": "Stacker:SubGroup", "Value": { "Fn::Sub": "${SubGroup}" } },
-          { "Key": "Stacker:HostType", "Value": "Kubernetes" },
+          { "Key": "Stacker:HostType", "Value": "k8s" },
           { "Key": "Stacker:Kubernetes:HostRole", "Value": "Worker" },
           { "Key": "Stacker:Kubernetes:HostPodCidr", "Value": { "Fn::Sub": "10.200.${WorkerNumber}.0/24" } }
         ],

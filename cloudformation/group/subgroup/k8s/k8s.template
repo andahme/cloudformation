@@ -41,7 +41,7 @@
       "Properties": {
         "GroupDescription": { "Fn::Sub": "Kubernetes Security Group (Control-Plane)" },
         "SecurityGroupIngress": [
-          { "IpProtocol": "tcp", "FromPort": "6443", "ToPort": "6443", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } }
+          { "Description": "Allow SubGroup to access the Kubernetes API", "IpProtocol": "tcp", "FromPort": "6443", "ToPort": "6443", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } }
         ],
         "Tags": [
           { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-control" } }
@@ -77,8 +77,8 @@
       "Properties": {
         "GroupDescription": { "Fn::Sub": "Kubernetes Security Group (Workers)" },
         "SecurityGroupIngress": [
-          { "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } },
-          { "IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } }
+          { "Description": "Allow SubGroup to access HTTP resources", "IpProtocol": "tcp", "FromPort": "80", "ToPort": "80", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } },
+          { "Description": "Allow SubGroup to access HTTPS resources", "IpProtocol": "tcp", "FromPort": "443", "ToPort": "443", "SourceSecurityGroupId": { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-sg" } } }
         ],
         "Tags": [
           { "Key": "Name", "Value": { "Fn::Sub": "${Group}-${SubGroup}-sg-k8s-workers" } }
