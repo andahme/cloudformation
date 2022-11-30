@@ -52,9 +52,20 @@
       }
     },
 
-    "sgci": {
+    "sgcci": {
       "Type": "AWS::EC2::SecurityGroupIngress",
       "Properties": {
+        "Description": "Allow Traffic within the Control-Plane",
+        "GroupId": { "Ref": "sgc" },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": { "Ref": "sgc" }
+      }
+    },
+
+    "sgcwi": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "Description": "Allow Workers to access the Control-Plane",
         "GroupId": { "Ref": "sgc" },
         "IpProtocol": "-1",
         "SourceSecurityGroupId": { "Ref": "sgw" }
@@ -78,18 +89,20 @@
       }
     },
 
-    "sgwic": {
+    "sgwci": {
       "Type": "AWS::EC2::SecurityGroupIngress",
       "Properties": {
+        "Description": "Allow the Control-Plane to access Workers",
         "GroupId": { "Ref": "sgw" },
         "IpProtocol": "-1",
         "SourceSecurityGroupId": { "Ref": "sgc" }
       }
     },
 
-    "sgwiw": {
+    "sgwwi": {
       "Type": "AWS::EC2::SecurityGroupIngress",
       "Properties": {
+        "Description": "Allow Traffic between Workers",
         "GroupId": { "Ref": "sgw" },
         "IpProtocol": "-1",
         "SourceSecurityGroupId": { "Ref": "sgw" }
