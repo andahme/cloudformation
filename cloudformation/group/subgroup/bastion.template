@@ -14,8 +14,8 @@
     "InstanceType": {
       "Type": "String",
       "AllowedValues": [
-        "t3.nano",
-        "t3.micro"
+        "t3.micro",
+        "t3.small"
       ],
       "Default": "t3.micro"
     },
@@ -98,7 +98,7 @@
           "Fn::Base64": {
             "Fn::Join": [ "\n", [
               "#cloud-config",
- { "Fn::Sub": "hostname: dev" },
+ { "Fn::Sub": "hostname: ${SubGroup}" },
               {
                 "Fn::Join": [ "", [
               "fqdn: ", { "Fn::ImportValue": { "Fn::Sub": "${Group}-${SubGroup}-domain-private" } }
@@ -106,7 +106,9 @@
               },
               "system_info:",
               "  default_user:",
- { "Fn::Sub": "    name: ${UserName}" }
+ { "Fn::Sub": "    name: ${UserName}" },
+              "packages:",
+              "  - git"
             ] ]
           }
         }
@@ -161,9 +163,21 @@
 
 
   "Outputs": {
+    "PrivateDomainName": {
+      "Value": {
+        "Ref": "dnsprivate"
+      }
+    },
+
     "PrivateIp": {
       "Value": {
         "Fn::GetAtt": [ "instance", "PrivateIp" ]
+      }
+    },
+
+    "PublicDomainName": {
+      "Value": {
+        "Ref": "dns"
       }
     },
 

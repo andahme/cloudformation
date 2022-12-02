@@ -20,18 +20,6 @@
 
     "InstanceType": {
       "Type": "String",
-      "AllowedValues": [
-        "t3.nano",
-        "t3.micro",
-        "t3.small",
-        "t3.medium",
-        "m5.large",
-        "m5.xlarge",
-        "m5.2xlarge",
-        "i3.large",
-        "i3.xlarge",
-        "i3.2xlarge"
-      ],
       "Default": "t3.small"
     },
 
@@ -154,15 +142,15 @@
 
 
   "Outputs": {
-    "PrivateIp": {
+    "PrivateDomainName": {
       "Value": {
-        "Fn::GetAtt": [ "instance", "PrivateIp" ]
+        "Ref": "dnsprivate"
       }
     },
 
-    "PublicIp": {
+    "PrivateIp": {
       "Value": {
-        "Fn::GetAtt": [ "instance", "PublicIp" ]
+        "Fn::GetAtt": [ "instance", "PrivateIp" ]
       }
     }
   }

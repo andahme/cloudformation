@@ -13,18 +13,6 @@
 
     "InstanceType": {
       "Type": "String",
-      "AllowedValues": [
-        "t3.nano",
-        "t3.micro",
-        "t3.small",
-        "t3.medium",
-        "m5.large",
-        "m5.xlarge",
-        "m5.2xlarge",
-        "i3.large",
-        "i3.xlarge",
-        "i3.2xlarge"
-      ],
       "Default": "t3.small"
     },
 
@@ -167,6 +155,12 @@
   "Outputs": {
     "PodCidr": {
       "Value": { "Fn::Sub": "10.200.${WorkerNumber}.0/24" }
+    },
+
+    "PrivateDomainName": {
+      "Value": {
+        "Ref": "dnsprivate"
+      }
     },
 
     "PrivateIp": {
